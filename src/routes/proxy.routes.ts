@@ -1,0 +1,50 @@
+import { Router } from 'express';
+import { createProxyMiddleware, Options } from 'http-proxy-middleware';
+import { config } from '../config/env';
+
+const router = Router();
+
+const proxyOptions = (target: string): Options => ({
+  target,
+  changeOrigin: true,
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      console.log(`[Gateway Proxy] 🔄 Redirigiendo ${req.method} ${req.originalUrl} a ${target}${req.url}`);
+      // Si el middleware de auth inyectó datos del usuario, pasarlos al microservicio como header seguro
+      if ((req as any).user) {
+         proxyReq.setHeader('x-user-data', JSON.stringify((req as any).user));
+      }
+    },
+    error: (err, req, res) => {
+      console.error(`[Gateway Proxy] ❌ Error conectando a ${target}: ${err.message}`);
+      res.status(502).json({ error: 'Bad Gateway: Microservicio no disponible' });
+    }
+  }
+});
+
+// =========================================================
+// MAPEO DE RUTAS (TÚNELES) HACIA LOS MICROSERVICIOS
+// =========================================================
+
+// 1. Servicio de Autenticación
+router.use('/api/v1/auth', createProxyMiddleware(proxyOptions(config.microservices.auth)));
+
+// 2. Servicio de Notificaciones
+router.use('/api/v1/notifications', createProxyMiddleware(proxyOptions(config.microservices.notifications)));
+
+// 3. Servicio de LLM (Inteligencia Artificial)
+router.use('/api/v1/llm', createProxyMiddleware(proxyOptions(config.microservices.llm)));
+
+// 4. Servicio de Clustering (Proyecto Integrador)
+router.use('/api/v1/clustering/integrator', createProxyMiddleware(proxyOptions(config.microservices.clusteringIntegrator)));
+
+// 5. Servicio de Clustering (Materia)
+router.use('/api/v1/clustering/subject', createProxyMiddleware(proxyOptions(config.microservices.clusteringSubject)));
+
+// 6. Servicio de Clustering (Información de Alumnos)
+router.use('/api/v1/clustering/students', createProxyMiddleware(proxyOptions(config.microservices.clusteringStudentsInfo)));
+
+// 7. Servicio de Clustering (Grupos de Alumnos)
+router.use('/api/v1/clustering/groups', createProxyMiddleware(proxyOptions(config.microservices.clusteringStudentsGroups)));
+
+export default router;
