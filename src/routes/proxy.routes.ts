@@ -4,24 +4,36 @@ import { config } from '../config/env';
 
 const router = Router();
 
-const proxyOptions = (target: string, pathRewrite?: { [key: string]: string }): Options => ({
-  target,
-  changeOrigin: true,
-  pathRewrite,
-  on: {
-    proxyReq: (proxyReq, req, res) => {
-      console.log(`[Gateway Proxy] 🔄 Redirigiendo ${req.method} ${req.originalUrl} a ${target}${proxyReq.path}`);
-      // Si el middleware de auth inyectó datos del usuario, pasarlos al microservicio como header seguro
-      if ((req as any).user) {
-         proxyReq.setHeader('x-user-data', JSON.stringify((req as any).user));
+const proxyOptions = (target: string, pathRewrite?: { [key: string]: string }): Options => {
+  const options: Options = {
+    target,
+    changeOrigin: true,
+    on: {
+      proxyReq: (proxyReq, req, res) => {
+        console.log(`[Gateway Proxy] 🔄 Redirigiendo ${req.method} ${(req as any).originalUrl || req.url} a ${target}${proxyReq.path}`);
+        // Si el middleware de auth inyectó datos del usuario, pasarlos al microservicio como header seguro
+        if ((req as any).user) {
+           proxyReq.setHeader('x-user-data', JSON.stringify((req as any).user));
+        }
+      },
+      error: (err, req, res) => {
+        console.error(`[Gateway Proxy] ❌ Error conectando a ${target}: ${err.message}`);
+        if ((res as any).status) {
+            (res as any).status(502).json({ error: 'Bad Gateway: Microservicio no disponible' });
+        } else {
+            (res as any).writeHead(502, { 'Content-Type': 'application/json' });
+            (res as any).end(JSON.stringify({ error: 'Bad Gateway: Microservicio no disponible' }));
+        }
       }
-    },
-    error: (err, req, res) => {
-      console.error(`[Gateway Proxy] ❌ Error conectando a ${target}: ${err.message}`);
-      res.status(502).json({ error: 'Bad Gateway: Microservicio no disponible' });
     }
+  };
+  
+  if (pathRewrite) {
+    options.pathRewrite = pathRewrite;
   }
-});
+  
+  return options;
+};
 
 // =========================================================
 // MAPEO DE RUTAS (TÚNELES) HACIA LOS MICROSERVICIOS
