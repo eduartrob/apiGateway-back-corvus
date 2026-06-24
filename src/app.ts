@@ -3,8 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import mongoSanitize from 'express-mongo-sanitize';
-const xssClean = require('xss-clean');
+
+
 
 import proxyRoutes from './routes/proxy.routes';
 import { authenticateGateway } from './middlewares/auth.middleware';
@@ -28,9 +28,7 @@ app.use(limiter);
 // 3. Log de peticiones en consola
 app.use(morgan('dev'));
 
-// 4. Sanitización de datos (Anti-Inyecciones)
-app.use(mongoSanitize());
-app.use(xssClean());
+
 
 // 5. Validación de seguridad Zero-Trust (JWT en el Gateway)
 // Validará el token antes de dejar pasar el tráfico a las rutas proxy

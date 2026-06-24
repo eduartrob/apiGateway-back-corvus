@@ -6,7 +6,8 @@ import { config } from '../config/env';
 const publicRoutes = [
   '/api/v1/auth/login',
   '/api/v1/auth/register',
-  '/api/v1/auth/google'
+  '/api/v1/auth/google',
+  '/api/v1/auth/recover-password'
 ];
 
 export const authenticateGateway = (req: Request, res: Response, next: NextFunction) => {
