@@ -18,12 +18,13 @@ app.use(cors());
 // 2. Limitador de peticiones (Rate Limiting) para evitar ataques DDoS
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // Límite de 100 peticiones por IP cada 15 minutos
+    max: 3000, // Límite de 3000 peticiones por IP cada 15 minutos (aumentado para soportar polling)
     message: { error: 'Demasiadas peticiones desde esta IP. Por favor, intenta de nuevo más tarde.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
-app.use(limiter);
+// Desactivado temporalmente para pruebas y presentación (evita que Docker agrupe IPs y bloquee)
+// app.use(limiter);
 
 // 3. Log de peticiones en consola
 app.use(morgan('dev'));
