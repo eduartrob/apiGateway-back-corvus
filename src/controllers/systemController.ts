@@ -37,7 +37,7 @@ export const streamContainerStats = async (req: Request, res: Response) => {
   }
 
   try {
-    const container = docker.getContainer(containerId);
+    const container = docker.getContainer(containerId as string);
     await container.inspect();
 
     const stream = await container.stats({ stream: true });
@@ -73,7 +73,7 @@ export const streamContainerStats = async (req: Request, res: Response) => {
     stream.on('end', () => res.end());
     stream.on('error', (err: any) => res.end());
 
-    req.on('close', () => stream.destroy());
+    req.on('close', () => (stream as any).destroy());
 
   } catch (error: any) {
     console.error('Error starting stats stream:', error.message);
@@ -97,7 +97,7 @@ export const streamContainerLogs = async (req: Request, res: Response) => {
   }
 
   try {
-    const container = docker.getContainer(containerId);
+    const container = docker.getContainer(containerId as string);
     
     const logStream = await container.logs({
       follow: true,
@@ -130,7 +130,7 @@ export const streamContainerLogs = async (req: Request, res: Response) => {
     logStream.on('end', () => res.end());
     logStream.on('error', () => res.end());
 
-    req.on('close', () => logStream.destroy());
+    req.on('close', () => (logStream as any).destroy());
 
   } catch (error: any) {
     console.error('Error starting log stream:', error.message);
