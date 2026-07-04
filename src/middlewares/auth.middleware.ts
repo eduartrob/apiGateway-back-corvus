@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 
-// Rutas que no requieren autenticación (Login, Registro)
+// -# rutas que no requieren autenticacion login registro
 const publicRoutes = [
   '/api/v1/auth/login',
   '/api/v1/auth/register',
@@ -11,7 +11,6 @@ const publicRoutes = [
 ];
 
 export const authenticateGateway = (req: Request, res: Response, next: NextFunction) => {
-  // Permitir tráfico a rutas públicas
   if (publicRoutes.includes(req.path)) {
     return next();
   }
@@ -26,7 +25,6 @@ export const authenticateGateway = (req: Request, res: Response, next: NextFunct
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret);
-    // Inyectar el payload decodificado en la petición por si el microservicio destino lo necesita
     (req as any).user = decoded;
     next();
   } catch (err) {
