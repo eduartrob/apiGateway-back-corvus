@@ -27,6 +27,7 @@ export const streamContainerStats = async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('X-Accel-Buffering', 'no');
 
   const containerId = req.params.id;
 
@@ -87,6 +88,7 @@ export const streamContainerLogs = async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('X-Accel-Buffering', 'no');
 
   const containerId = req.params.id;
 
