@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
 import proxyRoutes from './routes/proxy.routes';
+import systemRoutes from './routes/systemRoutes';
 import { authenticateGateway } from './middlewares/auth.middleware';
 
 const app = express();
@@ -25,6 +26,7 @@ app.use(morgan('dev'));
 
 app.use(authenticateGateway);
 
+app.use('/api/system', systemRoutes);
 app.use('/', proxyRoutes);
 
 export { app };
