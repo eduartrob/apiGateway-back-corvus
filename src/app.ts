@@ -26,7 +26,7 @@ app.use(morgan('dev'));
 
 app.use(authenticateGateway);
 
-app.use('/api/system', systemRoutes);
+app.use('/api/v1/system', systemRoutes);
 app.use('/', proxyRoutes);
 
 export { app };
