@@ -14,14 +14,18 @@ export const authenticateGateway = (req: Request, res: Response, next: NextFunct
   if (publicRoutes.includes(req.path)) {
     return next();
   }
-
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = '';
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query.token) {
+    token = req.query.token as string;
+  }
+
+  if (!token) {
     res.status(401).json({ error: 'Gateway Security: Token no proporcionado o inválido' });
     return;
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret);
