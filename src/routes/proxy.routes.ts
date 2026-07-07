@@ -59,7 +59,13 @@ router.use('/api/v1/clustering/students', createProxyMiddleware(proxyOptions(
 )));
 
 router.use('/api/v1/clustering/groups', createProxyMiddleware(proxyOptions(
-  config.microservices.clusteringStudentsGroups + '/api/v1'
+  config.microservices.clusteringStudentsGroups,
+  { '^/api/v1/clustering/groups': '' }
+)));
+
+router.use('/api/v1/teams', createProxyMiddleware(proxyOptions(
+  config.microservices.clusteringStudentsGroups + '/teams',
+  { '^/api/v1/teams': '' }
 )));
 
 export default router;
