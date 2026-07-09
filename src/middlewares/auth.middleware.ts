@@ -7,7 +7,9 @@ const publicRoutes = [
   '/api/v1/auth/login',
   '/api/v1/auth/register',
   '/api/v1/auth/google',
-  '/api/v1/auth/recover-password'
+  '/api/v1/auth/recover-password',
+  '/api/v1/auth/universities',
+  '/api/v1/auth/careers/resolve'
 ];
 
 export const authenticateGateway = (req: Request, res: Response, next: NextFunction) => {
