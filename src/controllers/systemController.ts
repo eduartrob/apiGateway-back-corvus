@@ -1,7 +1,59 @@
 import { Request, Response } from 'express';
 import Docker from 'dockerode';
+import os from 'os';
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+
+let previousCpus = os.cpus();
+
+export const streamHostStats = (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  const intervalId = setInterval(() => {
+    try {
+      const cpus = os.cpus();
+      let user = 0;
+      let nice = 0;
+      let sys = 0;
+      let idle = 0;
+      let irq = 0;
+      let total = 0;
+
+      for (let i = 0; i < cpus.length; i++) {
+        user += cpus[i].times.user - previousCpus[i].times.user;
+        nice += cpus[i].times.nice - previousCpus[i].times.nice;
+        sys += cpus[i].times.sys - previousCpus[i].times.sys;
+        idle += cpus[i].times.idle - previousCpus[i].times.idle;
+        irq += cpus[i].times.irq - previousCpus[i].times.irq;
+      }
+
+      total = user + nice + sys + idle + irq;
+      const cpuPercent = total === 0 ? 0 : ((total - idle) / total) * 100;
+      previousCpus = cpus;
+
+      const totalMem = os.totalmem();
+      const freeMem = os.freemem();
+
+      const payload = {
+        cpu_percent: cpuPercent.toFixed(2),
+        mem_total: totalMem,
+        mem_free: freeMem,
+        uptime: os.uptime()
+      };
+
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    } catch (err) { }
+  }, 2000);
+
+  req.on('close', () => {
+    clearInterval(intervalId);
+    res.end();
+  });
+};
 
 export const getContainers = async (req: Request, res: Response) => {
   try {
