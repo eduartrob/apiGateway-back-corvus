@@ -4,53 +4,71 @@ import os from 'os';
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
-let previousCpus = os.cpus();
+import osUtils from 'os-utils';
 
-export const streamHostStats = (req: Request, res: Response) => {
+export const streamHostStats = async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('X-Accel-Buffering', 'no');
 
-  const intervalId = setInterval(() => {
-    try {
-      const cpus = os.cpus();
-      let user = 0;
-      let nice = 0;
-      let sys = 0;
-      let idle = 0;
-      let irq = 0;
-      let total = 0;
+  const sendStats = async () => {
+    osUtils.cpuUsage(async (cpuUsage: number) => {
+      try {
+        const containers = await docker.listContainers({ all: true });
+        const containerStatsPromises = containers.filter(c => c.State === 'running').map(async (c) => {
+          const container = docker.getContainer(c.Id);
+          const stats = await container.stats({ stream: false });
 
-      for (let i = 0; i < cpus.length; i++) {
-        user += cpus[i].times.user - previousCpus[i].times.user;
-        nice += cpus[i].times.nice - previousCpus[i].times.nice;
-        sys += cpus[i].times.sys - previousCpus[i].times.sys;
-        idle += cpus[i].times.idle - previousCpus[i].times.idle;
-        irq += cpus[i].times.irq - previousCpus[i].times.irq;
+          let cpuPercent = 0.0;
+          const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - (stats.precpu_stats.cpu_usage.total_usage || 0);
+          const systemDelta = stats.cpu_stats.system_cpu_usage - (stats.precpu_stats.system_cpu_usage || 0);
+          const cpuCount = stats.cpu_stats.online_cpus || stats.cpu_stats.cpu_usage.percpu_usage?.length || 1;
+
+          if (systemDelta > 0.0 && cpuDelta > 0.0) {
+            cpuPercent = (cpuDelta / systemDelta) * cpuCount * 100.0;
+          }
+
+          const memUsage = stats.memory_stats.usage || 0;
+          const memLimit = stats.memory_stats.limit || 0;
+          const memPercent = memLimit > 0 ? ((memUsage / memLimit) * 100).toFixed(2) : '0.00';
+
+          return {
+            id: c.Id.substring(0, 12),
+            name: c.Names[0].replace('/', ''),
+            state: c.State,
+            cpu_percent: cpuPercent.toFixed(2),
+            mem_usage_bytes: memUsage,
+            mem_limit_bytes: memLimit,
+            mem_percent: memPercent
+          };
+        });
+
+        const containerStats = await Promise.all(containerStatsPromises);
+
+        const payload = {
+          host: {
+            cpu_percent: (cpuUsage * 100).toFixed(2),
+            total_mem_mb: (os.totalmem() / 1024 / 1024).toFixed(0),
+            free_mem_mb: (os.freemem() / 1024 / 1024).toFixed(0),
+            uptime_secs: os.uptime()
+          },
+          containers: containerStats
+        };
+
+        res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      } catch (error) {
+        console.error("Error in host stats loop:", error);
       }
+    });
+  };
 
-      total = user + nice + sys + idle + irq;
-      const cpuPercent = total === 0 ? 0 : ((total - idle) / total) * 100;
-      previousCpus = cpus;
-
-      const totalMem = os.totalmem();
-      const freeMem = os.freemem();
-
-      const payload = {
-        cpu_percent: cpuPercent.toFixed(2),
-        mem_total: totalMem,
-        mem_free: freeMem,
-        uptime: os.uptime()
-      };
-
-      res.write(`data: ${JSON.stringify(payload)}\n\n`);
-    } catch (err) { }
-  }, 2000);
+  sendStats();
+  const interval = setInterval(sendStats, 2000);
 
   req.on('close', () => {
-    clearInterval(intervalId);
+    clearInterval(interval);
     res.end();
   });
 };
