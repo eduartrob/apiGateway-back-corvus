@@ -9,6 +9,8 @@ const publicRoutes = [
   '/api/v1/auth/google',
   '/api/v1/auth/recover-password',
   '/api/v1/auth/universities',
+  '/api/v1/auth/universities/validate',
+  '/api/v1/auth/careers',
   '/api/v1/auth/careers/resolve'
 ];
 
