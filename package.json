@@ -30,6 +30,7 @@
     "http-proxy-middleware": "^4.1.1",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
+    "os-utils": "^0.0.14",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
@@ -39,6 +40,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.0.0",
+    "@types/os-utils": "^0.0.4",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
   }
