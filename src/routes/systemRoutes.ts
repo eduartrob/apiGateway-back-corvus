@@ -3,6 +3,9 @@ import { getContainers, streamContainerStats, streamContainerLogs, streamHostSta
 
 const router = Router();
 
+// Endpoint for host overall stats
+router.get('/host-stats', streamHostStats);
+
 // Endpoint for listing containers
 router.get('/containers', getContainers);
 
