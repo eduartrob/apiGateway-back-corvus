@@ -42,6 +42,10 @@ router.use('/api/v1/final-reviews', createProxyMiddleware(proxyOptions(
   config.microservices.auth + '/final-reviews'
 )));
 
+router.use('/api/v1/professors', createProxyMiddleware(proxyOptions(
+  config.microservices.auth + '/professors'
+)));
+
 router.use('/api/v1/notifications', createProxyMiddleware(proxyOptions(
   config.microservices.notifications + '/api/notifications'
 )));
