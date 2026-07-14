@@ -1,0 +1,21 @@
+name: Check Pruebas
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Pruebas on Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cat /home/corvus-pruebas/orchestration-back-corvus/docker-compose.yml | head -n 30
+            echo "==== CONTAINER NAMES ===="
+            grep "container_name" /home/corvus-pruebas/orchestration-back-corvus/docker-compose.yml
+            echo "==== PORTS ===="
+            grep -A 1 "ports:" /home/corvus-pruebas/orchestration-back-corvus/docker-compose.yml
