@@ -13,61 +13,30 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          command_timeout: 30m
           script: |
-            cd /home/corvus-pruebas
-            for repo in *corvus; do
+            # 1. Actualizar todos los repos de pruebas a la rama dev
+            for repo in /home/corvus-pruebas/*; do
               if [ -d "$repo/.git" ]; then
-                echo "Updating $repo to dev branch..."
-                cd /home/corvus-pruebas/"$repo"
+                echo "==> Actualizando $(basename $repo) a dev..."
+                cd "$repo"
                 git fetch --all || true
-                git reset --hard origin/dev || git checkout dev || true
+                git checkout dev 2>/dev/null || git checkout -b dev origin/dev 2>/dev/null || true
                 git pull origin dev || true
               fi
             done
+
+            # 2. Actualizar el orquestador de pruebas a dev
             cd /home/corvus-pruebas/orquestador-pruebas
             git fetch --all || true
-            git reset --hard origin/dev || git checkout dev || true
+            git checkout dev 2>/dev/null || git checkout -b dev origin/dev 2>/dev/null || true
             git pull origin dev || true
-            cat << 'INNER_EOF' > /home/corvus-pruebas/orquestador-pruebas/docker-compose.override.yml
-            version: '3.8'
-            services:
-              db:
-                container_name: corvus_postgres_pruebas
-                ports:
-                  - "5434:5432"
-              rabbitmq:
-                container_name: corvus_rabbitmq_pruebas
-                ports:
-                  - "5673:5672"
-                  - "15673:15672"
-              api-gateway:
-                container_name: corvus_api_gateway_pruebas
-                ports:
-                  - "3010:3000"
-              auth-service:
-                container_name: corvus_auth_service_pruebas
-              notifications-service:
-                container_name: corvus_notifications_service_pruebas
-              clustering-integrator-service:
-                container_name: corvus_clustering_integrator_pruebas
-              clustering-subject-service:
-                container_name: corvus_clustering_subject_pruebas
-              clustering-students-service:
-                container_name: corvus_clustering_students_pruebas
-              ollama:
-                container_name: corvus_ollama_pruebas
-              llm-service:
-                container_name: corvus_llm_service_pruebas
-              admin-frontend:
-                container_name: corvus_admin_frontend_pruebas
-                ports:
-                  - "8080:80"
-                  - "8443:443"
-            networks:
-              corvus_network:
-                name: corvus_network_pruebas
-            INNER_EOF
 
+            # 3. Restaurar docker-compose.yml limpio antes de parcharlo
+            git checkout docker-compose.yml
+
+            # 4. Parcharlo en el servidor: agregar sufijo -pruebas a todos los container_name
+            sed -i 's/\(container_name: .*\)/\1-pruebas/' docker-compose.yml
+
+            # 5. Bajar contenedores viejos de pruebas y levantar los nuevos
             docker compose down || true
             docker compose up -d --build
