@@ -15,16 +15,18 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /home/corvus-pruebas
-            for dir in *-corvus; do
-              if [ -d "$dir/.git" ]; then
-                echo "Updating $dir..."
-                cd "$dir"
-                git fetch --all
-                git checkout dev || git checkout -b dev origin/dev
+            for repo in *corvus; do
+              if [ -d "$repo/.git" ]; then
+                echo "Updating $repo to dev branch..."
+                cd /home/corvus-pruebas/"$repo"
+                git fetch --all || true
+                git reset --hard origin/dev || git checkout dev || true
                 git pull origin dev || true
-                cd ..
               fi
             done
-            cd orchestration-back-corvus
+            cd /home/corvus-pruebas/orquestador-pruebas
+            git fetch --all || true
+            git reset --hard origin/dev || git checkout dev || true
+            git pull origin dev || true
             docker compose down || true
             docker compose up -d --build
