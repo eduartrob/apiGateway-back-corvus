@@ -14,19 +14,29 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /home/corvus-pruebas
-            for repo in *corvus; do
+            # 1. Actualizar todos los repos de pruebas a la rama dev
+            for repo in /home/corvus-pruebas/*; do
               if [ -d "$repo/.git" ]; then
-                echo "Updating $repo to dev branch..."
-                cd /home/corvus-pruebas/"$repo"
+                echo "==> Actualizando $(basename $repo) a dev..."
+                cd "$repo"
                 git fetch --all || true
-                git reset --hard origin/dev || git checkout dev || true
+                git checkout dev 2>/dev/null || git checkout -b dev origin/dev 2>/dev/null || true
                 git pull origin dev || true
               fi
             done
+
+            # 2. Actualizar el orquestador de pruebas a dev
             cd /home/corvus-pruebas/orquestador-pruebas
             git fetch --all || true
-            git reset --hard origin/dev || git checkout dev || true
+            git checkout dev 2>/dev/null || git checkout -b dev origin/dev 2>/dev/null || true
             git pull origin dev || true
+
+            # 3. Restaurar docker-compose.yml limpio antes de parcharlo
+            git checkout docker-compose.yml
+
+            # 4. Parcharlo en el servidor: agregar sufijo -pruebas a todos los container_name
+            sed -i 's/\(container_name: .*\)/\1-pruebas/' docker-compose.yml
+
+            # 5. Bajar contenedores viejos de pruebas y levantar los nuevos
             docker compose down || true
             docker compose up -d --build
