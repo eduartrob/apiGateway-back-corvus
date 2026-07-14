@@ -37,6 +37,10 @@ jobs:
             # 4. Parcharlo en el servidor: agregar sufijo -pruebas a todos los container_name
             sed -i 's/\(container_name: .*\)/\1-pruebas/' docker-compose.yml
 
-            # 5. Bajar contenedores viejos de pruebas y levantar los nuevos
-            docker compose down || true
+            # 5. Limpiar contenedores y redes viejas de pruebas
+            docker compose down --remove-orphans || true
+            docker rm -f $(docker ps -aq --filter "name=pruebas") 2>/dev/null || true
+            docker network prune -f || true
+
+            # 6. Levantar entorno de pruebas
             docker compose up -d --build
