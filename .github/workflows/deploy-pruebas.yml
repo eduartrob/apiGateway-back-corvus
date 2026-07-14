@@ -1,0 +1,30 @@
+name: Deploy Pruebas
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Pruebas on Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/corvus-pruebas
+            for dir in *-corvus; do
+              if [ -d "$dir/.git" ]; then
+                echo "Updating $dir..."
+                cd "$dir"
+                git fetch --all
+                git checkout dev || git checkout -b dev origin/dev
+                git pull origin dev || true
+                cd ..
+              fi
+            done
+            cd orchestration-back-corvus
+            docker compose down || true
+            docker compose up -d --build
