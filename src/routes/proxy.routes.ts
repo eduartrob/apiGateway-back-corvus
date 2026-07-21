@@ -42,6 +42,10 @@ router.use('/api/v1/final-reviews', createProxyMiddleware(proxyOptions(
   config.microservices.auth + '/final-reviews'
 )));
 
+router.use('/api/v1/projects', createProxyMiddleware(proxyOptions(
+  config.microservices.auth + '/projects'
+)));
+
 router.use('/api/v1/professors', createProxyMiddleware(proxyOptions(
   config.microservices.auth + '/professors'
 )));
@@ -62,8 +66,9 @@ router.use('/api/v1/clustering/subject', createProxyMiddleware(proxyOptions(
   config.microservices.clusteringSubject + '/api/v1'
 )));
 
-router.use('/api/v1/clustering/students', createProxyMiddleware(proxyOptions(
-  config.microservices.clusteringStudentsInfo + '/api/v1'
+router.use('/api/v1/pagos', createProxyMiddleware(proxyOptions(
+  config.microservices.payments,
+  { '^/api/v1/pagos': '/pagos' }
 )));
 
 router.use('/api/v1/clustering/groups', createProxyMiddleware(proxyOptions(
