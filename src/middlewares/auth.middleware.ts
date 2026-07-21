@@ -11,7 +11,8 @@ const publicRoutes = [
   '/api/v1/auth/universities',
   '/api/v1/auth/universities/validate',
   '/api/v1/auth/careers',
-  '/api/v1/auth/careers/resolve'
+  '/api/v1/auth/careers/resolve',
+  '/api/v1/pagos/webhook'
 ];
 
 export const authenticateGateway = (req: Request, res: Response, next: NextFunction) => {
