@@ -67,8 +67,7 @@ router.use('/api/v1/clustering/subject', createProxyMiddleware(proxyOptions(
 )));
 
 router.use('/api/v1/pagos', createProxyMiddleware(proxyOptions(
-  config.microservices.payments,
-  { '^/api/v1/pagos': '/pagos' }
+  config.microservices.payments + '/pagos'
 )));
 
 router.use('/api/v1/clustering/groups', createProxyMiddleware(proxyOptions(
