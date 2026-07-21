@@ -8,6 +8,7 @@ const proxyOptions = (target: string, pathRewrite?: { [key: string]: string }): 
   const options: Options = {
     target,
     changeOrigin: true,
+    ws: true,
     on: {
       proxyReq: (proxyReq, req, res) => {
         console.log(`[Gateway Proxy] 🔄 Redirigiendo ${req.method} ${(req as any).originalUrl || req.url} a ${target}${proxyReq.path}`);
@@ -17,9 +18,10 @@ const proxyOptions = (target: string, pathRewrite?: { [key: string]: string }): 
       },
       error: (err, req, res) => {
         console.error(`[Gateway Proxy] ❌ Error conectando a ${target}: ${err.message}`);
-        if ((res as any).status) {
+        // Para WebSockets, res no es un ServerResponse normal, puede no tener status()
+        if (res && typeof (res as any).status === 'function') {
             (res as any).status(502).json({ error: 'Bad Gateway: Microservicio no disponible' });
-        } else {
+        } else if (res && typeof (res as any).writeHead === 'function') {
             (res as any).writeHead(502, { 'Content-Type': 'application/json' });
             (res as any).end(JSON.stringify({ error: 'Bad Gateway: Microservicio no disponible' }));
         }
