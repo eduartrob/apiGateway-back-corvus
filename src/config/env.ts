@@ -10,7 +10,7 @@ export const config = {
     llm: process.env.LLM_URL || 'http://localhost:3003',
     clusteringIntegrator: process.env.CLUSTERING_INTEGRATOR_URL || 'http://localhost:3004',
     clusteringSubject: process.env.CLUSTERING_SUBJECT_URL || 'http://localhost:3005',
-    clusteringStudentsInfo: process.env.CLUSTERING_STUDENTS_INFO_URL || 'http://localhost:3006',
+    payments: process.env.PAYMENTS_URL || 'http://localhost:8001',
     clusteringStudentsGroups: process.env.CLUSTERING_STUDENTS_GROUPS_URL || 'http://localhost:3007',
   }
 };
